@@ -12,8 +12,8 @@ FASTLED_USING_NAMESPACE
 
 #define FRAMES_PER_SECOND  120
 
-const char* ssid     = "Dalek-Caan";
-const char* password = "MA34LC61";
+const char* ssid     = "xxxx";
+const char* password = "yyyy";
 
 CRGB ledsMain[NUM_LEDS_MAIN];
 CRGB ledsSide[NUM_LEDS_SIDE];
