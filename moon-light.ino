@@ -12,8 +12,8 @@ FASTLED_USING_NAMESPACE
 
 #define FRAMES_PER_SECOND  120
 
-const char* ssid     = "xxxx";
-const char* password = "yyyy";
+const char* ssid     = "xxxxx";
+const char* password = "yyyyy";
 
 CRGB ledsMain[NUM_LEDS_MAIN];
 CRGB ledsSide[NUM_LEDS_SIDE];
@@ -43,9 +43,54 @@ uint8_t groupF[] = {  81,  82,  83,  84,  85,  86,  87,  88,  89,  90,  91,  92,
                      209, 210, 211, 212, 213, 214, 215, 216,
                      245, 246, 247, 248, 249, 250                                                   };
 
+uint32_t ms = 0;
+
+#define HUE_A HUE_RED
+#define HUE_B HUE_PURPLE
+#define HUE_C HUE_ORANGE
+#define HUE_D HUE_RED
+
+CHSVPalette16 BLOOD(
+                  CHSV(HUE_B + 0, 255, 128),
+                  CHSV(HUE_A + 4, 255, 192),
+                  CHSV(HUE_A + 8, 255, 192),
+                  CHSV(HUE_A + 8, 64, 156),
+                  CHSV(HUE_A,     96, 172),
+                  CHSV(HUE_A,     255,255),
+                  CHSV(HUE_A,     255,255),
+                  CHSV(HUE_A,     255,128),
+                  CHSV(HUE_A + 2, 255,128),
+                  CHSV(HUE_A + 4, 255,255),
+                  CHSV(HUE_A + 6, 255,255),
+                  CHSV(HUE_A + 4, 255,128),
+                  CHSV(HUE_A + 2, 255,128),
+                  CHSV(HUE_A,     255,255),
+                  CHSV(HUE_A,     255,255),
+                  CHSV(HUE_A,     255,255));
+
+CHSVPalette16 HARVEST(
+                  CHSV(HUE_D + 0, 255, 128),
+                  CHSV(HUE_D + 4, 255, 192),
+                  CHSV(HUE_D + 8, 255, 192),
+                  CHSV(HUE_D + 8, 64, 156),
+                  CHSV(HUE_C,     96, 172),
+                  CHSV(HUE_C,     255,255),
+                  CHSV(HUE_C,     255,255),
+                  CHSV(HUE_C,     255,128),
+                  CHSV(HUE_C + 2, 255,128),
+                  CHSV(HUE_C + 4, 255,255),
+                  CHSV(HUE_C + 6, 255,255),
+                  CHSV(HUE_C + 4, 255,128),
+                  CHSV(HUE_C + 2, 255,128),
+                  CHSV(HUE_C,     255,255),
+                  CHSV(HUE_A,     255,255),
+                  CHSV(HUE_A,     255,255));
+
 uint8_t gHue = 0;
 bool gReverseDirection = false;
 CRGBPalette16 gPal = LavaColors_p;
+
+void doWash_pattern(const CHSVPalette16& pal);
 
 void setup() {
   Serial.begin(115200);
@@ -69,17 +114,33 @@ void setup() {
 }
 
 int curIndex = 0;
+bool curMode = false;
 
 void loop() {
   EVERY_N_MILLISECONDS( 20 ) { gHue++; }
   EVERY_N_MILLISECONDS( 1000 ) { curIndex++;  curIndex = curIndex % 6; }
-  //fill_rainbow( ledsMain, NUM_LEDS_MAIN, gHue, 7);
+  EVERY_N_SECONDS( 600 ) { curMode = !curMode; }
 
-  //Fire2012WithPalette();
+  //fill_solid(ledsMain, NUM_LEDS_MAIN, CHSV(0, 255, 128));
+  //for(int i = 0; i < sizeof(groupA); i++) { ledsMain[groupA[i]] = CHSV(49, 255, 128); }
+  //for(int i = 0; i < sizeof(groupB); i++) { ledsMain[groupB[i]] = CHSV(49, 255, 128); }
 
+  //if(curMode) {
+  //  doWash_pattern(HARVEST);
+  //} else {
+  //  doWash_pattern(BLOOD);
+  //}
+  rainbow();
+  addGlitter(1);
+
+  FastLED.show();
+  FastLED.delay(1000/FRAMES_PER_SECOND); 
+}
+
+void rainbow() {
   fill_rainbow( ledsSide, NUM_LEDS_SIDE, gHue, 7);
-  fill_solid( ledsMain, NUM_LEDS_MAIN, CHSV(35, 80, 64));
-/*
+  //fill_solid( ledsMain, NUM_LEDS_MAIN, CHSV(35, 80, 64));
+
   for(int j = 0; j < NUM_LEDS_MAIN; j++) {
     ledsMain[j].fadeToBlackBy( 10 );  
   }
@@ -104,7 +165,59 @@ void loop() {
       for(int i = 0; i < sizeof(groupF); i++) { ledsMain[groupF[i]] = CHSV(gHue, 255, 255); }
       break;
   }
-  */
-  FastLED.show();
-  FastLED.delay(1000/FRAMES_PER_SECOND); 
+}
+
+void addGlitter(fract8 chanceOfGlitter) {
+  if(random8() < chanceOfGlitter) {
+    ledsMain[random16(NUM_LEDS_MAIN) ] += CRGB::White;
+  }
+}
+
+void doWash_pattern(const CHSVPalette16& pal) {
+    uint32_t ms = millis();
+    
+    int dtheta1 = 5300;
+    uint16_t starttheta1 = ms * 15;
+    uint16_t theta1 = starttheta1;
+
+    int dtheta2 = 7300;
+    uint16_t starttheta2 = ms * 17;
+    uint16_t theta2 = starttheta2;
+
+    int dtheta3 = 2300;
+    uint16_t starttheta3 = ms * 3;
+    uint16_t theta3 = starttheta3;
+
+    int brightness = beatsin88(170, 96, 255);
+
+    for(uint16_t i = 0; i < NUM_LEDS_MAIN; i++) {
+        int s1 = sin16( theta1);
+        theta1 += dtheta1;
+
+        int s2 = sin16( theta2);
+        theta2 += dtheta2;
+
+        int s3 = sin16( theta3);
+        theta3 += dtheta3;
+
+        byte bri = ((s1 + 32768) >> 8);
+
+        byte sat = ((s2 + 32768) >> 8);
+        sat = (sat / 4) + 192;
+        sat = brighten8_video(sat);
+        byte desat = 255 - sat;
+        desat = scale8( desat, 16);
+
+        byte hue = ((s3 + 32768) >> 8);
+        hue = scale8(hue, 240);
+        
+        CRGB rgb = ColorFromPalette( pal, hue, brightness);
+        rgb += CRGB( desat, desat, desat);
+        CRGB old = ledsMain[i];
+        old.nscale8(192);
+        rgb.nscale8_video(64);
+
+        rgb += old;
+        ledsMain[i] = rgb;
+    }
 }
